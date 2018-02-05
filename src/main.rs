@@ -2,8 +2,6 @@ use std::collections::HashMap;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::net::*;
-use std::io::*;
-use std::str;
 use std::thread;
 use std::sync::mpsc;
 use std::sync::mpsc::*;
@@ -12,71 +10,83 @@ struct Player {
     tag: String,
     sock: TcpStream
 }
-struct Pair {
-    Red: Player,
-    Blue: Player
-}
 
 fn relay(mut red: TcpStream, mut blue: TcpStream) {
-    blue.set_nonblocking(true).expect("no block");
-    red.set_nonblocking(true).expect("no block");
+    blue.set_nonblocking(true).unwrap();
+    red.set_nonblocking(true).unwrap();
     loop {
-        let mut redRead = String::new();
-        let mut blueRead = String::new();
+        let mut red_read = String::new();
+        let mut blue_read = String::new();
         {
-            let mut redReader = BufReader::new(&mut red);
-            let mut blueReader = BufReader::new(&mut blue);
-            redReader.read_line(&mut redRead);
-            blueReader.read_line(&mut blueRead);
+            let mut red_reader = BufReader::new(&mut red); // We will use is_empty in nightly.
+            match red_reader.read_line(&mut red_read) {
+                Ok(n) => {
+                    if 0 < n {
+                        blue.write(red_read.as_bytes()).unwrap();
+                    }
+                }
+                Err(_) => {
+                }
+            }
         }
-        blue.write(redRead.as_bytes());
-        red.write(blueRead.as_bytes());
+        {
+            let mut blue_reader = BufReader::new(&mut blue);
+            match blue_reader.read_line(&mut blue_read) {
+                Ok(n) => {
+                    if 0 < n {
+                        red.write(blue_read.as_bytes()).unwrap();
+                    }
+                }
+                Err(_) => {
+                }
+            }
+        }
     }
 }
 
 fn linker(rx: Receiver<Player>) {
-    let mut Players = HashMap::new();
+    let mut players = HashMap::new();
     loop {
         let player = rx.recv().unwrap();
         println!("{}", player.tag);
-        match Players.remove(&player.tag) {
+        match players.remove(&player.tag) {
             Some(p) => {
                 thread::spawn(move|| {
                     relay(p, player.sock);
                 });
             }
             None => {
-                Players.insert(player.tag, player.sock);
+                players.insert(player.tag, player.sock);
             }
         }
-        println!("Currently {} players waiting.", Players.len());
+        println!("Currently {} players waiting.", players.len());
     }
 }
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:1664").unwrap();
-    let (linkerTx, linkerRx) = mpsc::channel();
+    let (linker_tx, linker_rx) = mpsc::channel();
     thread::spawn(move || {
-        linker(linkerRx);
+        linker(linker_rx);
     });
     loop {
         match listener.accept() {
        	    Ok((mut sock, address)) => {
-                let lTx = linkerTx.clone();
+                let l_tx = linker_tx.clone();
                 thread::spawn(move || {
                     let mut tag = String::new();
                     {
                         let mut handle = BufReader::new(&mut sock);
-                        handle.read_line(&mut tag);
+                        handle.read_line(&mut tag).unwrap();
                     }
                     tag = tag.trim().to_owned();
                     println!("New Player {:?} joining \"{}\" lobby.", address, tag);
                     let player = Player{tag: tag, sock: sock};
-                    lTx.send(player);
+                    l_tx.send(player).unwrap(); // If fails linker must be down
                 });
 	    }
 	    Err(e) => {
-	        println!("Failed to connect");
+	        println!("Failed to connect {}.", e);
 	    }
         }
     }
