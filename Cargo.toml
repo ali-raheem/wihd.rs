@@ -1,6 +1,6 @@
 [package]
 name = "wihdrs"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Ali Raheem <ali.raheem@gmail.com>"]
 
 [dependencies]
