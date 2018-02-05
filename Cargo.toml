@@ -1,0 +1,6 @@
+[package]
+name = "wih_server"
+version = "0.1.0"
+authors = ["Ali Raheem <ali.raheem@gmail.com>"]
+
+[dependencies]
