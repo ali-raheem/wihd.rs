@@ -13,13 +13,13 @@ $ ./wihdrs
 ### Building
 
 ```
-$ cargo build
+$ cargo build --release
 ```
 
 You can also run from cargo directly.
 
 ### Issues
 
-* This server is not recommended and not tested, I probably wont be supporting it compared to the erlang version.
+* While this has been lightly tested and seems to be working the main supported server is in Erlang [here](https://github.com/wolfmankurd/wihd.rs). 
 
 
