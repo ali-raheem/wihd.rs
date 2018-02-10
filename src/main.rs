@@ -48,7 +48,6 @@ fn linker(rx: Receiver<Player>) {
     let mut players = HashMap::new();
     loop {
         let player = rx.recv().unwrap();
-        println!("{}", player.tag);
         match players.remove(&player.tag) {
             Some(p) => {
                 thread::spawn(move|| {
@@ -64,7 +63,7 @@ fn linker(rx: Receiver<Player>) {
 }
 
 fn main() {
-    let listener = TcpListener::bind("127.0.0.1:1664").unwrap();
+    let listener = TcpListener::bind("127.0.0.1:1664").expect("Failed to bind port. Is it in use? Do you have neccessarily permission?");
     let (linker_tx, linker_rx) = mpsc::channel();
     thread::spawn(move || {
         linker(linker_rx);
@@ -72,7 +71,7 @@ fn main() {
     loop {
         match listener.accept() {
        	    Ok((mut sock, address)) => {
-                let l_tx = linker_tx.clone();
+                let linker_tx = linker_tx.clone();
                 thread::spawn(move || {
                     let mut tag = String::new();
                     {
@@ -80,9 +79,9 @@ fn main() {
                         handle.read_line(&mut tag).unwrap();
                     }
                     tag = tag.trim().to_owned();
-                    println!("New Player {:?} joining \"{}\" lobby.", address, tag);
+                    println!("New player {} joined lobby '{}'.", address, tag);
                     let player = Player{tag: tag, sock: sock};
-                    l_tx.send(player).unwrap(); // If fails linker must be down
+                    linker_tx.send(player).unwrap();
                 });
 	    }
 	    Err(e) => {
