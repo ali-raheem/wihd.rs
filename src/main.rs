@@ -22,7 +22,8 @@ fn relay(mut red: TcpStream, mut blue: TcpStream) {
             match red_reader.read_line(&mut red_read) {
                 Ok(n) => {
                     if 0 < n {
-                        blue.write(red_read.as_bytes()).unwrap();
+                        blue.write(red_read.as_bytes())
+                            .expect("Could not write to stream.");
                     }
                 }
                 Err(_) => {
@@ -34,7 +35,8 @@ fn relay(mut red: TcpStream, mut blue: TcpStream) {
             match blue_reader.read_line(&mut blue_read) {
                 Ok(n) => {
                     if 0 < n {
-                        red.write(blue_read.as_bytes()).unwrap();
+                        red.write(blue_read.as_bytes())
+                            .expect("Could not write to stream.");
                     }
                 }
                 Err(_) => {
@@ -63,7 +65,8 @@ fn linker(rx: Receiver<Player>) {
 }
 
 fn main() {
-    let listener = TcpListener::bind("127.0.0.1:1664").expect("Failed to bind port. Is it in use? Do you have neccessarily permission?");
+    let listener = TcpListener::bind("127.0.0.1:1664")
+        .expect("Failed to bind port.");
     let (linker_tx, linker_rx) = mpsc::channel();
     thread::spawn(move || {
         linker(linker_rx);
@@ -76,12 +79,14 @@ fn main() {
                     let mut tag = String::new();
                     {
                         let mut handle = BufReader::new(&mut sock);
-                        handle.read_line(&mut tag).unwrap();
+                        handle.read_line(&mut tag)
+                            .expect("Could not read from socket");
                     }
                     tag = tag.trim().to_owned();
                     println!("New player {} joined lobby '{}'.", address, tag);
                     let player = Player{tag: tag, sock: sock};
-                    linker_tx.send(player).unwrap();
+                    linker_tx.send(player)
+                        .expect("Could not register with linker.");
                 });
 	    }
 	    Err(e) => {
