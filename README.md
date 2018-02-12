@@ -1,4 +1,4 @@
-# wihd.rs v0.1.1
+# wihd.rs v0.1.2
 
 A War in Hex online server written in Rust.
 
