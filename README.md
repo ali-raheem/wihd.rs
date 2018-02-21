@@ -1,5 +1,7 @@
 # wihd.rs v0.1.2
 
+[![Build Status](https://travis-ci.org/wolfmankurd/wihd.rs.svg?branch=master)](https://travis-ci.org/wolfmankurd/wihd.rs)
+
 A War in Hex online server written in Rust.
 
 ### Running
